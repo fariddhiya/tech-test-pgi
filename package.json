@@ -1,7 +1,7 @@
 {
-  "name": "nest-app",
-  "version": "0.0.1",
-  "description": "",
+  "name": "siem-dashboard-api",
+  "version": "1.0.0",
+  "description": "Mini SIEM Dashboard API built with NestJS + TypeScript + PostgreSQL + Elasticsearch",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -17,12 +17,20 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migration:run": "node scripts/run-migrations.js",
+    "seed:es": "node scripts/seed-es-data.js"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.19.1",
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.4.4",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

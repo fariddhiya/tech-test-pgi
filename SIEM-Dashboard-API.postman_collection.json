@@ -1,0 +1,544 @@
+{
+  "info": {
+    "name": "SIEM Dashboard API",
+    "description": "Mini Security Information and Event Management Dashboard API\n\n**Base URL:** `http://localhost:3000`\n\n---\n\n## Endpoints Overview\n\n| Method | Endpoint | Description |\n|--------|----------|-------------|\n| GET | `/health` | Check service health status |\n| GET | `/alerts` | Get filtered alert logs |\n| GET | `/dashboard/top-targeted-assets` | Get top 5 most targeted internal assets |\n| POST | `/highlighted-ips` | Create a highlighted IP |\n| GET | `/highlighted-ips` | Get all highlighted IPs |\n| PATCH | `/highlighted-ips/:id` | Update a highlighted IP |\n| DELETE | `/highlighted-ips/:id` | Delete a highlighted IP |\n| GET | `/highlighted-ips/activity` | Get activity logs for highlighted IPs |\n\n---\n\n## Response Format\n\nAll endpoints return a standard response structure:\n\n```json\n{\n  \"success\": true,\n  \"message\": \"...\",\n  \"data\": {},\n  \"meta\": { \"total_data\": 0, \"page\": 1, \"limit\": 20 }\n}\n```\n\n## Error Response\n\n```json\n{\n  \"success\": false,\n  \"message\": \"Error message\",\n  \"data\": null\n}\n```\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Check Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check the health status of all services (PostgreSQL and Elasticsearch).\n\n**Response:**\n- `healthy` — all services are up\n- `degraded` — one or more services are down"
+          },
+          "response": [
+            {
+              "name": "Healthy",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"healthy\",\n  \"services\": {\n    \"postgres\": \"up\",\n    \"elasticsearch\": \"up\"\n  }\n}"
+            },
+            {
+              "name": "Degraded",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"degraded\",\n  \"services\": {\n    \"postgres\": \"up\",\n    \"elasticsearch\": \"down\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get Filtered Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?department=IT&risk=high&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"],
+              "query": [
+                {
+                  "key": "department",
+                  "value": "IT",
+                  "description": "Filter by department owner (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "risk",
+                  "value": "high",
+                  "description": "Filter by risk level (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page, max 100 (default: 20)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get filtered alert logs from Elasticsearch.\n\n**Query Parameters:**\n| Param | Type | Required | Description |\n|-------|------|----------|-------------|\n| department | string | No | Filter by department owner |\n| risk | string | No | Filter by risk level |\n| page | number | No | Page number (default: 1) |\n| limit | number | No | Items per page, max 100 (default: 20) |\n\n**Flow:**\n1. Query PostgreSQL for asset target IPs by department/risk\n2. Use those IPs to query Elasticsearch for matching alerts\n3. Return paginated results"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alerts?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["alerts"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully fetched alert logs\",\n  \"meta\": {\n    \"total_data\": 150,\n    \"page\": 1,\n    \"limit\": 20\n  },\n  \"data\": [\n    {\n      \"timestamp\": \"2026-06-24T10:30:00Z\",\n      \"source_ip\": \"185.220.101.5\",\n      \"target_ip\": \"192.168.1.100\",\n      \"alert_name\": \"Brute Force Attempt\",\n      \"severity\": 5\n    },\n    {\n      \"timestamp\": \"2026-06-24T10:25:00Z\",\n      \"source_ip\": \"45.33.32.156\",\n      \"target_ip\": \"192.168.1.105\",\n      \"alert_name\": \"Port Scan Detected\",\n      \"severity\": 3\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Top Targeted Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/top-targeted-assets",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "top-targeted-assets"]
+            },
+            "description": "Get the top 5 most targeted internal assets.\n\n**Flow:**\n1. Query Elasticsearch for top 5 most targeted IPs (by attack count)\n2. Query PostgreSQL to enrich with asset name and department info\n3. Return combined results\n\nAlways returns top 5, no pagination needed."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/dashboard/top-targeted-assets",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["dashboard", "top-targeted-assets"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully fetched top targeted assets\",\n  \"meta\": {\n    \"total_data\": 5\n  },\n  \"data\": [\n    {\n      \"target_ip\": \"192.168.1.100\",\n      \"total_attacks\": 1250,\n      \"asset_name\": \"WEB-SERVER-01\",\n      \"department\": \"IT\"\n    },\n    {\n      \"target_ip\": \"192.168.1.105\",\n      \"total_attacks\": 890,\n      \"asset_name\": \"DB-SERVER-01\",\n      \"department\": \"Finance\"\n    },\n    {\n      \"target_ip\": \"192.168.1.200\",\n      \"total_attacks\": 450,\n      \"asset_name\": null,\n      \"department\": null\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Highlighted IPs",
+      "item": [
+        {
+          "name": "Create Highlighted IP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ip_address\": \"185.220.101.5\",\n  \"label\": \"Known C2 Server\",\n  \"description\": \"Command and control server from threat intel feed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/highlighted-ips",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlighted-ips"]
+            },
+            "description": "Create a new highlighted IP entry.\n\n**Body (JSON):**\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| ip_address | string | Yes | Valid IPv4 address |\n| label | string | Yes | Label for the highlighted IP |\n| description | string | No | Description of the highlighted IP |"
+          },
+          "response": [
+            {
+              "name": "Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ip_address\": \"185.220.101.5\",\n  \"label\": \"Known C2 Server\",\n  \"description\": \"Command and control server from threat intel feed\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully created highlighted IP\",\n  \"data\": {\n    \"id\": 1,\n    \"ip_address\": \"185.220.101.5\",\n    \"label\": \"Known C2 Server\",\n    \"description\": \"Command and control server from threat intel feed\",\n    \"is_active\": true,\n    \"created_at\": \"2026-06-24T10:30:00Z\",\n    \"updated_at\": null\n  }\n}"
+            },
+            {
+              "name": "Conflict - Duplicate IP",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ip_address\": \"185.220.101.5\",\n  \"label\": \"Duplicate Entry\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Highlighted IP with address 185.220.101.5 already exists\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Highlighted IPs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/highlighted-ips",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlighted-ips"]
+            },
+            "description": "Retrieve all highlighted IP entries."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully retrieved highlighted IPs\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"ip_address\": \"185.220.101.5\",\n      \"label\": \"Known C2 Server\",\n      \"description\": \"Command and control server from threat intel feed\",\n      \"is_active\": true,\n      \"created_at\": \"2026-06-24T10:30:00Z\",\n      \"updated_at\": null\n    },\n    {\n      \"id\": 2,\n      \"ip_address\": \"45.33.32.156\",\n      \"label\": \"Scanner\",\n      \"description\": null,\n      \"is_active\": true,\n      \"created_at\": \"2026-06-24T11:00:00Z\",\n      \"updated_at\": null\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Highlighted IP",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Updated C2 Server\",\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/highlighted-ips/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlighted-ips", "1"]
+            },
+            "description": "Update an existing highlighted IP entry.\n\n**URL Params:**\n| Param | Type | Description |\n|-------|------|-------------|\n| id | number | ID of the highlighted IP |\n\n**Body (JSON) — all fields optional:**\n| Field | Type | Description |\n|-------|------|-------------|\n| ip_address | string | New IPv4 address |\n| label | string | New label |\n| description | string | New description |\n| is_active | boolean | Active status |"
+          },
+          "response": [
+            {
+              "name": "Updated",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Updated C2 Server\",\n  \"is_active\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully updated highlighted IP\",\n  \"data\": {\n    \"id\": 1,\n    \"ip_address\": \"185.220.101.5\",\n    \"label\": \"Updated C2 Server\",\n    \"description\": \"Command and control server from threat intel feed\",\n    \"is_active\": false,\n    \"created_at\": \"2026-06-24T10:30:00Z\",\n    \"updated_at\": \"2026-06-24T12:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Not Found\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Highlighted IP with id 999 not found\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Highlighted IP",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/highlighted-ips/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlighted-ips", "1"]
+            },
+            "description": "Delete a highlighted IP entry.\n\n**URL Params:**\n| Param | Type | Description |\n|-------|------|-------------|\n| id | number | ID of the highlighted IP |"
+          },
+          "response": [
+            {
+              "name": "Deleted",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully deleted highlighted IP\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Highlighted IP with id 999 not found\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Highlighted IP Activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/highlighted-ips/activity?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlighted-ips", "activity"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page, max 100 (default: 20)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get activity logs (from Elasticsearch) for all active highlighted IPs.\n\n**Flow:**\n1. Query PostgreSQL for all active highlighted IP addresses\n2. Use those IPs to query Elasticsearch for matching alerts\n3. Return paginated results\n\n**Query Parameters:**\n| Param | Type | Required | Description |\n|-------|------|----------|-------------|\n| page | number | No | Page number (default: 1) |\n| limit | number | No | Items per page, max 100 (default: 20) |"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/highlighted-ips/activity?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlighted-ips", "activity"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Successfully retrieved data\",\n  \"meta\": {\n    \"total_data\": 35,\n    \"page\": 1,\n    \"limit\": 20\n  },\n  \"data\": [\n    {\n      \"timestamp\": \"2026-06-24T10:30:00Z\",\n      \"source_ip\": \"185.220.101.5\",\n      \"target_ip\": \"192.168.1.100\",\n      \"alert_name\": \"C2 Communication Detected\",\n      \"severity\": 5\n    },\n    {\n      \"timestamp\": \"2026-06-24T10:25:00Z\",\n      \"source_ip\": \"45.33.32.156\",\n      \"target_ip\": \"192.168.1.105\",\n      \"alert_name\": \"Port Scan Detected\",\n      \"severity\": 3\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
